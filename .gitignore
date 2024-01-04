@@ -3,3 +3,4 @@ compile_commands.json
 *.dSYM/
 .DS_Store
 main
+deps/**/*.png
