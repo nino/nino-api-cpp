@@ -1,3 +1,0 @@
-[submodule "libhttpserver"]
-	path = libhttpserver
-	url = git@github.com:etr/libhttpserver.git
