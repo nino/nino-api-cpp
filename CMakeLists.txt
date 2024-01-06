@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28.0)
+cmake_minimum_required(VERSION 3.22.0)
 project(nino_api_cpp)
 add_compile_options(-std=c++20)
 add_compile_options(-Wall)
@@ -23,6 +23,7 @@ add_compile_options(-Wno-enum-compare)
 add_compile_options(-Wno-enum-compare-switch)
 
 include(FetchContent)
+include(ExternalProject)
 
 FetchContent_Declare(
   libmicrohttpd
@@ -36,19 +37,49 @@ FetchContent_Declare(
   GIT_TAG        master # It's usually better to pin a specific commit or version tag
 )
 
-FetchContent_Declare(
-  libhttpserver
-  GIT_REPOSITORY https://github.com/etr/libhttpserver
-  GIT_TAG        master # It's usually better to pin a specific commit or version tag
-)
-
 FetchContent_MakeAvailable(libmicrohttpd)
 FetchContent_MakeAvailable(pugixml)
-FetchContent_MakeAvailable(libhttpserver)
+# FetchContent_MakeAvailable(httpserver)
+
+# FetchContent_Declare(
+#   httpserver
+#   GIT_REPOSITORY https://github.com/etr/libhttpserver
+#   GIT_TAG        master # It's usually better to pin a specific commit or version tag
+# )
+
+ExternalProject_Add(libhttpserver
+	DEPENDS libmicrohttpd
+	PREFIX sysroot-prefix
+	GIT_REPOSITORY https://github.com/etr/libhttpserver.git
+	GIT_TAG master
+	UPDATE_DISCONNECTED 1
+	CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
+		--$<IF:$<CONFIG:DEBUG>,enable,disable>-debug --disable-examples
+	TEST_COMMAND make check
+	TEST_EXCLUDE_FROM_MAIN 1
+	STEP_TARGETS update install test
+)
+
+ExternalProject_Get_Property(libhttpserver SOURCE_DIR)
+ExternalProject_Add_Step(libhttpserver bootstrap
+	COMMAND				./bootstrap
+	DEPENDEES			update
+	DEPENDERS			configure
+	BYPRODUCTS			<SOURCE_DIR>/configure
+	WORKING_DIRECTORY	<SOURCE_DIR>
+)
+# FetchContent_Declare(
+#   seastar
+#   GIT_REPOSITORY https://github.com/scylladb/seastar
+#   GIT_TAG        master # It's usually better to pin a specific commit or version tag
+# )
+
+
 
 find_package(OpenSSL REQUIRED)
 
-add_executable(api source/main.cpp source/http.cpp source/last_year.cpp)
+
+add_executable(api source/main.cpp source/last_year.cpp source/http.cpp)
 
 target_link_libraries(api PRIVATE microhttpd pugixml httpserver)
 target_include_directories(api PRIVATE ${OPENSSL_INCLUDE_DIR})
