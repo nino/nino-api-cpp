@@ -4,16 +4,13 @@
 #include <pugixml.hpp>
 #include <sstream>
 
-namespace h = httpserver;
-
-std::shared_ptr<h::http_response> LastYear::render(const h::http_request &) {
+std::string last_year::handler() {
   auto maybe_feed =
       http::get_file("https://ninoan.com", "/audio/project-hail-mary.xml");
-  if (maybe_feed.has_failure()) {
-    return std::shared_ptr<h::http_response>(
-        new h::string_response("Failed to get feed"));
+  if (!maybe_feed.has_value()) {
+    return "Failed to fetch feed.";
   }
-  auto feed = maybe_feed.assume_value();
+  std::string feed = maybe_feed.value();
 
   pugi::xml_document doc;
   doc.load_string(feed.c_str());
@@ -45,6 +42,5 @@ std::shared_ptr<h::http_response> LastYear::render(const h::http_request &) {
 
   std::stringstream output;
   doc.save(output);
-  return std::shared_ptr<h::http_response>(
-      new h::string_response(output.str()));
+  return output.str();
 }

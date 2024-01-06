@@ -1,11 +1,6 @@
 #pragma once
-#include <httpserver.hpp>
+#include <string>
 
-namespace h = httpserver;
-
-class LastYear : public h::http_resource {
-public:
-  LastYear() = default;
-
-  std::shared_ptr<h::http_response> render(const h::http_request &req);
-};
+namespace last_year {
+  std::string handler();
+}
